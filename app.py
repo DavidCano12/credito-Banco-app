@@ -65,7 +65,7 @@ def index():
             "A6": entrada_original["A6"],
             "A7": entrada_original["A7"],
             "A8": entrada_original["A8"],
-            "A9": entrada_original["A9"],
+            "A9": "t",
             "A10": entrada_original["A10"],
             "A11": clip_max_dinero("A11", entrada_original["A11"]),
             "A12": "t",  # valor fijo para el modelo
