@@ -30,7 +30,6 @@ def clip_max_dinero(col, valor):
     if max_val is None:
         # No es una columna de dinero, se devuelve tal cual
         return valor
-    # Si se pasa del máximo, lo recortamos
     return min(valor, max_val)
 
 
@@ -41,51 +40,58 @@ def index():
     datos_entrada = None
 
     if request.method == "POST":
-        # Recibir datos del formulario
         form = request.form
 
-        # Construir el diccionario con las columnas A1–A15
-        # OJO: estos nombres deben coincidir EXACTAMENTE con las columnas del modelo
-        entrada = {
-            "A1": form.get("A1"),   # variable categórica (ej: 'a', 'b')
-
-            # Numéricas NO de dinero: solo convertimos a float
+        # 1) LO QUE ESCRIBIÓ EL USUARIO (para mostrar en el resumen)
+        entrada_original = {
+            "A1": form.get("A1"),
             "A2": float(form.get("A2")) if form.get("A2") else None,
             "A3": float(form.get("A3")) if form.get("A3") else None,
-
             "A4": form.get("A4"),
             "A5": form.get("A5"),
             "A6": form.get("A6"),
             "A7": form.get("A7"),
-
-            # A8 también es numérica, pero no la estamos recortando como dinero
             "A8": float(form.get("A8")) if form.get("A8") else None,
-
             "A9": form.get("A9"),
             "A10": form.get("A10"),
-
-            # Aquí aplicamos el recorte SOLO a las de dinero
-            "A11": clip_max_dinero("A11", float(form.get("A11")) if form.get("A11") else None),
-
+            "A11": float(form.get("A11")) if form.get("A11") else None,
             "A12": form.get("A12"),
             "A13": form.get("A13"),
-
-            "A14": clip_max_dinero("A14", float(form.get("A14")) if form.get("A14") else None),
-            "A15": clip_max_dinero("A15", float(form.get("A15")) if form.get("A15") else None),
+            "A14": float(form.get("A14")) if form.get("A14") else None,
+            "A15": float(form.get("A15")) if form.get("A15") else None,
         }
 
-        # Convertir a DataFrame con una sola fila
-        df_entrada = pd.DataFrame([entrada])
+        # 2) LO QUE VE EL MODELO (misma estructura, pero con clipping en dinero)
+        entrada_modelo = {
+            "A1": entrada_original["A1"],
+            "A2": entrada_original["A2"],
+            "A3": entrada_original["A3"],
+            "A4": entrada_original["A4"],
+            "A5": entrada_original["A5"],
+            "A6": entrada_original["A6"],
+            "A7": entrada_original["A7"],
+            "A8": entrada_original["A8"],
+            "A9": entrada_original["A9"],
+            "A10": entrada_original["A10"],
+            "A11": clip_max_dinero("A11", entrada_original["A11"]),
+            "A12": entrada_original["A12"],
+            "A13": entrada_original["A13"],
+            "A14": clip_max_dinero("A14", entrada_original["A14"]),
+            "A15": clip_max_dinero("A15", entrada_original["A15"]),
+        }
 
-        # Guardar los datos de entrada para mostrarlos en el HTML
-        datos_entrada = entrada
+        # DataFrame SOLO para el modelo
+        df_entrada = pd.DataFrame([entrada_modelo])
 
-        # Hacer la predicción con el modelo cargado
+        # En el HTML mostramos lo que el usuario escribió originalmente
+        datos_entrada = entrada_original
+
+        # Predicción con el modelo
         prob_aprobado = modelo.predict_proba(df_entrada)[0, 1]
         pred_clase = int(modelo.predict(df_entrada)[0])  # 1 = aprobado, 0 = rechazado
 
         resultado = "APROBADO" if pred_clase == 1 else "RECHAZADO"
-        prob_aprobado = round(prob_aprobado * 100, 2)  # en porcentaje
+        prob_aprobado = round(prob_aprobado * 100, 2)
 
     return render_template(
         "index.html",
@@ -96,5 +102,4 @@ def index():
 
 
 if __name__ == "__main__":
-    # Modo local
     app.run(host="0.0.0.0", port=5000, debug=True)
