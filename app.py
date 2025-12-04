@@ -11,7 +11,6 @@ MODELO_PATH = os.path.join(os.path.dirname(__file__), "modelo_credito_rf.pkl")
 modelo = joblib.load(MODELO_PATH)
 
 # Límites MÁXIMOS solo para variables que manejan dinero
-# (valores obtenidos del dataset en Colab, usando percentil 99)
 LIMITES_MAX_DINERO = {
     "A11": 7.5,      # Ratio deuda/ingresos
     "A14": 577.5,    # Monto del crédito
@@ -19,16 +18,11 @@ LIMITES_MAX_DINERO = {
 }
 
 def clip_max_dinero(col, valor):
-    """
-    Si la columna es una de las de dinero (A11, A14, A15),
-    recorta el valor al máximo permitido según el dataset.
-    Si no es de dinero, lo deja igual.
-    """
+    """Recorta el valor al máximo permitido para columnas de dinero."""
     if valor is None:
         return None
     max_val = LIMITES_MAX_DINERO.get(col)
     if max_val is None:
-        # No es una columna de dinero, se devuelve tal cual
         return valor
     return min(valor, max_val)
 
@@ -42,7 +36,7 @@ def index():
     if request.method == "POST":
         form = request.form
 
-        # 1) LO QUE ESCRIBIÓ EL USUARIO (para mostrar en el resumen)
+        # 1) Lo que escribió el usuario (para mostrar en el resumen)
         entrada_original = {
             "A1": form.get("A1"),
             "A2": float(form.get("A2")) if form.get("A2") else None,
@@ -61,7 +55,7 @@ def index():
             "A15": float(form.get("A15")) if form.get("A15") else None,
         }
 
-        # 2) LO QUE VE EL MODELO (misma estructura, pero con clipping en dinero)
+        # 2) Lo que ve el modelo (A12 fijado, dinero recortado)
         entrada_modelo = {
             "A1": entrada_original["A1"],
             "A2": entrada_original["A2"],
@@ -74,19 +68,19 @@ def index():
             "A9": entrada_original["A9"],
             "A10": entrada_original["A10"],
             "A11": clip_max_dinero("A11", entrada_original["A11"]),
-            "A12": entrada_original["A12"],
+            "A12": "t",  # valor fijo para el modelo
             "A13": entrada_original["A13"],
             "A14": clip_max_dinero("A14", entrada_original["A14"]),
             "A15": clip_max_dinero("A15", entrada_original["A15"]),
         }
 
-        # DataFrame SOLO para el modelo
+        # DataFrame para el modelo
         df_entrada = pd.DataFrame([entrada_modelo])
 
-        # En el HTML mostramos lo que el usuario escribió originalmente
+        # En el HTML mostramos lo que el usuario escribió
         datos_entrada = entrada_original
 
-        # Predicción con el modelo
+        # Predicción
         prob_aprobado = modelo.predict_proba(df_entrada)[0, 1]
         pred_clase = int(modelo.predict(df_entrada)[0])  # 1 = aprobado, 0 = rechazado
 
