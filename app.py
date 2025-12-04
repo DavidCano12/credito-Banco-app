@@ -13,8 +13,8 @@ modelo = joblib.load(MODELO_PATH)
 # Límites MÁXIMOS solo para variables que manejan dinero
 LIMITES_MAX_DINERO = {
     "A11": 7.5,      # Ratio deuda/ingresos
-    "A14": 577.5,    # Monto del crédito
-    "A15": 988.75,   # Ingreso / ahorros (escala del dataset)
+    "A14": 50000000.1,    # Monto del crédito
+    "A15": 500000000.1,   # Ingreso / ahorros (escala del dataset)
 }
 
 def clip_max_dinero(col, valor):
